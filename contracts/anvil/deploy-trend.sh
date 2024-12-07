@@ -12,4 +12,4 @@ cd "$parent_path"
 
 cd ../
 
-forge script script/HelloWorldDeployer.s.sol --rpc-url http://localhost:8545 --broadcast
+forge script script/TrendServiceDeployer.s.sol --rpc-url http://localhost:8545 --broadcast

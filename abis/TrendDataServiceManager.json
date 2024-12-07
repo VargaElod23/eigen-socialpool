@@ -13,6 +13,11 @@
         "internalType": "address"
       },
       {
+        "name": "_rewardsCoordinator",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
         "name": "_delegationManager",
         "type": "address",
         "internalType": "address"
@@ -133,26 +138,43 @@
     "name": "createNewTask",
     "inputs": [
       {
-        "name": "name",
+        "name": "coin_id",
         "type": "string",
         "internalType": "string"
+      },
+      {
+        "name": "block_number",
+        "type": "uint256",
+        "internalType": "uint256"
       }
     ],
     "outputs": [
       {
         "name": "",
         "type": "tuple",
-        "internalType": "struct IHelloWorldServiceManager.Task",
+        "internalType": "struct ITrendDataServiceManager.Task",
         "components": [
           {
-            "name": "name",
-            "type": "string",
-            "internalType": "string"
+            "name": "id",
+            "type": "uint256",
+            "internalType": "uint256"
           },
           {
-            "name": "taskCreatedBlock",
-            "type": "uint32",
-            "internalType": "uint32"
+            "name": "request",
+            "type": "tuple",
+            "internalType": "struct ITrendDataServiceManager.TrendRequest",
+            "components": [
+              {
+                "name": "coin_id",
+                "type": "string",
+                "internalType": "string"
+              },
+              {
+                "name": "block_number",
+                "type": "uint256",
+                "internalType": "uint256"
+              }
+            ]
           }
         ]
       }
@@ -279,19 +301,36 @@
       {
         "name": "task",
         "type": "tuple",
-        "internalType": "struct IHelloWorldServiceManager.Task",
+        "internalType": "struct ITrendDataServiceManager.Task",
         "components": [
           {
-            "name": "name",
-            "type": "string",
-            "internalType": "string"
+            "name": "id",
+            "type": "uint256",
+            "internalType": "uint256"
           },
           {
-            "name": "taskCreatedBlock",
-            "type": "uint32",
-            "internalType": "uint32"
+            "name": "request",
+            "type": "tuple",
+            "internalType": "struct ITrendDataServiceManager.TrendRequest",
+            "components": [
+              {
+                "name": "coin_id",
+                "type": "string",
+                "internalType": "string"
+              },
+              {
+                "name": "block_number",
+                "type": "uint256",
+                "internalType": "uint256"
+              }
+            ]
           }
         ]
+      },
+      {
+        "name": "social_dominance",
+        "type": "uint256",
+        "internalType": "uint256"
       },
       {
         "name": "referenceTaskIndex",
@@ -342,6 +381,30 @@
         "name": "",
         "type": "address",
         "internalType": "address"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "tokenSocialScores",
+    "inputs": [
+      {
+        "name": "",
+        "type": "string",
+        "internalType": "string"
+      },
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
       }
     ],
     "stateMutability": "view"
@@ -399,17 +462,29 @@
         "name": "task",
         "type": "tuple",
         "indexed": false,
-        "internalType": "struct IHelloWorldServiceManager.Task",
+        "internalType": "struct ITrendDataServiceManager.Task",
         "components": [
           {
-            "name": "name",
-            "type": "string",
-            "internalType": "string"
+            "name": "id",
+            "type": "uint256",
+            "internalType": "uint256"
           },
           {
-            "name": "taskCreatedBlock",
-            "type": "uint32",
-            "internalType": "uint32"
+            "name": "request",
+            "type": "tuple",
+            "internalType": "struct ITrendDataServiceManager.TrendRequest",
+            "components": [
+              {
+                "name": "coin_id",
+                "type": "string",
+                "internalType": "string"
+              },
+              {
+                "name": "block_number",
+                "type": "uint256",
+                "internalType": "uint256"
+              }
+            ]
           }
         ]
       }
@@ -468,17 +543,29 @@
         "name": "task",
         "type": "tuple",
         "indexed": false,
-        "internalType": "struct IHelloWorldServiceManager.Task",
+        "internalType": "struct ITrendDataServiceManager.Task",
         "components": [
           {
-            "name": "name",
-            "type": "string",
-            "internalType": "string"
+            "name": "id",
+            "type": "uint256",
+            "internalType": "uint256"
           },
           {
-            "name": "taskCreatedBlock",
-            "type": "uint32",
-            "internalType": "uint32"
+            "name": "request",
+            "type": "tuple",
+            "internalType": "struct ITrendDataServiceManager.TrendRequest",
+            "components": [
+              {
+                "name": "coin_id",
+                "type": "string",
+                "internalType": "string"
+              },
+              {
+                "name": "block_number",
+                "type": "uint256",
+                "internalType": "uint256"
+              }
+            ]
           }
         ]
       },

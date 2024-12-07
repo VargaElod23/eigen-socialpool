@@ -9,14 +9,14 @@ import {console2} from "forge-std/Test.sol";
 import {Vm} from "forge-std/Vm.sol";
 import {stdJson} from "forge-std/StdJson.sol";
 import {ECDSAStakeRegistry} from "@eigenlayer-middleware/src/unaudited/ECDSAStakeRegistry.sol";
-import {HelloWorldServiceManager} from "../../src/HelloWorldServiceManager.sol";
+import {TrendDataServiceManager} from "../../src/TrendDataServiceManager.sol";
 import {IDelegationManager} from "@eigenlayer/contracts/interfaces/IDelegationManager.sol";
 import {Quorum} from "@eigenlayer-middleware/src/interfaces/IECDSAStakeRegistryEventsAndErrors.sol";
 import {UpgradeableProxyLib} from "./UpgradeableProxyLib.sol";
 import {CoreDeploymentLib} from "./CoreDeploymentLib.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 
-library HelloWorldDeploymentLib {
+library TrendDataDeploymentLib {
     using stdJson for *;
     using Strings for *;
     using UpgradeableProxyLib for address;
@@ -24,7 +24,7 @@ library HelloWorldDeploymentLib {
     Vm internal constant vm = Vm(address(uint160(uint256(keccak256("hevm cheat code")))));
 
     struct DeploymentData {
-        address helloWorldServiceManager;
+        address trendDataServiceManager;
         address stakeRegistry;
         address strategy;
         address token;
@@ -38,29 +38,30 @@ library HelloWorldDeploymentLib {
         DeploymentData memory result;
 
         // First, deploy upgradeable proxy contracts that will point to the implementations.
-        result.helloWorldServiceManager = UpgradeableProxyLib.setUpEmptyProxy(proxyAdmin);
+        result.trendDataServiceManager = UpgradeableProxyLib.setUpEmptyProxy(proxyAdmin);
         result.stakeRegistry = UpgradeableProxyLib.setUpEmptyProxy(proxyAdmin);
         // Deploy the implementation contracts, using the proxy contracts as inputs
         address stakeRegistryImpl =
             address(new ECDSAStakeRegistry(IDelegationManager(core.delegationManager)));
-        address helloWorldServiceManagerImpl = address(
-            new HelloWorldServiceManager(
-                core.avsDirectory, result.stakeRegistry, core.rewardsCoordinator, core.delegationManager
+        address trendDataServiceManagerImpl = address(
+            new TrendDataServiceManager(
+                core.avsDirectory,
+                result.stakeRegistry,
+                core.rewardsCoordinator,
+                core.delegationManager
             )
         );
         // Upgrade contracts
         bytes memory upgradeCall = abi.encodeCall(
-            ECDSAStakeRegistry.initialize, (result.helloWorldServiceManager, 0, quorum)
+            ECDSAStakeRegistry.initialize, (result.trendDataServiceManager, 0, quorum)
         );
         UpgradeableProxyLib.upgradeAndCall(result.stakeRegistry, stakeRegistryImpl, upgradeCall);
-        UpgradeableProxyLib.upgrade(result.helloWorldServiceManager, helloWorldServiceManagerImpl);
+        UpgradeableProxyLib.upgrade(result.trendDataServiceManager, trendDataServiceManagerImpl);
 
         return result;
     }
 
-    function readDeploymentJson(
-        uint256 chainId
-    ) internal returns (DeploymentData memory) {
+    function readDeploymentJson(uint256 chainId) internal returns (DeploymentData memory) {
         return readDeploymentJson("deployments/", chainId);
     }
 
@@ -76,7 +77,7 @@ library HelloWorldDeploymentLib {
 
         DeploymentData memory data;
         /// TODO: 2 Step for reading deployment json.  Read to the core and the AVS data
-        data.helloWorldServiceManager = json.readAddress(".contracts.helloWorldServiceManager");
+        data.trendDataServiceManager = json.readAddress(".contracts.trendDataServiceManager");
         data.stakeRegistry = json.readAddress(".contracts.stakeRegistry");
         data.strategy = json.readAddress(".contracts.strategy");
         data.token = json.readAddress(".contracts.token");
@@ -85,10 +86,8 @@ library HelloWorldDeploymentLib {
     }
 
     /// write to default output path
-    function writeDeploymentJson(
-        DeploymentData memory data
-    ) internal {
-        writeDeploymentJson("deployments/hello-world/", block.chainid, data);
+    function writeDeploymentJson(DeploymentData memory data) internal {
+        writeDeploymentJson("deployments/trend-data/", block.chainid, data);
     }
 
     function writeDeploymentJson(
@@ -97,7 +96,7 @@ library HelloWorldDeploymentLib {
         DeploymentData memory data
     ) internal {
         address proxyAdmin =
-            address(UpgradeableProxyLib.getProxyAdmin(data.helloWorldServiceManager));
+            address(UpgradeableProxyLib.getProxyAdmin(data.trendDataServiceManager));
 
         string memory deploymentData = _generateDeploymentJson(data, proxyAdmin);
 
@@ -132,10 +131,10 @@ library HelloWorldDeploymentLib {
         return string.concat(
             '{"proxyAdmin":"',
             proxyAdmin.toHexString(),
-            '","helloWorldServiceManager":"',
-            data.helloWorldServiceManager.toHexString(),
-            '","helloWorldServiceManagerImpl":"',
-            data.helloWorldServiceManager.getImplementation().toHexString(),
+            '","trendDataServiceManager":"',
+            data.trendDataServiceManager.toHexString(),
+            '","trendDataServiceManagerImpl":"',
+            data.trendDataServiceManager.getImplementation().toHexString(),
             '","stakeRegistry":"',
             data.stakeRegistry.toHexString(),
             '","stakeRegistryImpl":"',
@@ -144,7 +143,7 @@ library HelloWorldDeploymentLib {
             data.strategy.toHexString(),
             '","token":"',
             data.token.toHexString(),
-             '"}'
+            '"}'
         );
     }
 }

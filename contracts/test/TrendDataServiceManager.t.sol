@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.12;
 
-import {HelloWorldServiceManager} from "../src/HelloWorldServiceManager.sol";
+import {TrendDataServiceManager} from "../src/TrendDataServiceManager.sol";
 import {MockAVSDeployer} from "@eigenlayer-middleware/test/utils/MockAVSDeployer.sol";
 import {ECDSAStakeRegistry} from "@eigenlayer-middleware/src/unaudited/ECDSAStakeRegistry.sol";
 import {Vm} from "forge-std/Vm.sol";
 import {console2} from "forge-std/Test.sol";
-import {HelloWorldDeploymentLib} from "../script/utils/HelloWorldDeploymentLib.sol";
+import {TrendDataDeploymentLib} from "../script/utils/TrendDataDeploymentLib.sol";
 import {CoreDeploymentLib} from "../script/utils/CoreDeploymentLib.sol";
 import {UpgradeableProxyLib} from "../script/utils/UpgradeableProxyLib.sol";
 import {ERC20Mock} from "./ERC20Mock.sol";
@@ -23,11 +23,11 @@ import {ISignatureUtils} from "@eigenlayer/contracts/interfaces/ISignatureUtils.
 import {AVSDirectory} from "@eigenlayer/contracts/core/AVSDirectory.sol";
 import {IAVSDirectory} from "@eigenlayer/contracts/interfaces/IAVSDirectory.sol";
 import {Test, console2 as console} from "forge-std/Test.sol";
-import {IHelloWorldServiceManager} from "../src/IHelloWorldServiceManager.sol";
+import {ITrendDataServiceManager} from "../src/ITrendDataServiceManager.sol";
 import {ECDSAUpgradeable} from
     "@openzeppelin-upgrades/contracts/utils/cryptography/ECDSAUpgradeable.sol";
 
-contract HelloWorldTaskManagerSetup is Test {
+contract TrendDataTaskManagerSetup is Test {
     Quorum internal quorum;
 
     struct Operator {
@@ -42,7 +42,7 @@ contract HelloWorldTaskManagerSetup is Test {
     Operator[] internal operators;
     TrafficGenerator internal generator;
 
-    HelloWorldDeploymentLib.DeploymentData internal helloWorldDeployment;
+    TrendDataDeploymentLib.DeploymentData internal trendDataDeployment;
     CoreDeploymentLib.DeploymentData internal coreDeployment;
     CoreDeploymentLib.DeploymentConfigData coreConfigData;
 
@@ -64,14 +64,12 @@ contract HelloWorldTaskManagerSetup is Test {
         IStrategy strategy = addStrategy(address(mockToken));
         quorum.strategies.push(StrategyParams({strategy: strategy, multiplier: 10_000}));
 
-        helloWorldDeployment =
-            HelloWorldDeploymentLib.deployContracts(proxyAdmin, coreDeployment, quorum);
-        labelContracts(coreDeployment, helloWorldDeployment);
+        trendDataDeployment =
+            TrendDataDeploymentLib.deployContracts(proxyAdmin, coreDeployment, quorum);
+        labelContracts(coreDeployment, trendDataDeployment);
     }
 
-    function addStrategy(
-        address token
-    ) public returns (IStrategy) {
+    function addStrategy(address token) public returns (IStrategy) {
         if (tokenToStrategy[token] != IStrategy(address(0))) {
             return tokenToStrategy[token];
         }
@@ -84,7 +82,7 @@ contract HelloWorldTaskManagerSetup is Test {
 
     function labelContracts(
         CoreDeploymentLib.DeploymentData memory coreDeployment,
-        HelloWorldDeploymentLib.DeploymentData memory helloWorldDeployment
+        TrendDataDeploymentLib.DeploymentData memory trendDataDeployment
     ) internal {
         vm.label(coreDeployment.delegationManager, "DelegationManager");
         vm.label(coreDeployment.avsDirectory, "AVSDirectory");
@@ -95,8 +93,8 @@ contract HelloWorldTaskManagerSetup is Test {
         vm.label(coreDeployment.pauserRegistry, "PauserRegistry");
         vm.label(coreDeployment.strategyFactory, "StrategyFactory");
         vm.label(coreDeployment.strategyBeacon, "StrategyBeacon");
-        vm.label(helloWorldDeployment.helloWorldServiceManager, "HelloWorldServiceManager");
-        vm.label(helloWorldDeployment.stakeRegistry, "StakeRegistry");
+        vm.label(trendDataDeployment.trendDataServiceManager, "TrendDataServiceManager");
+        vm.label(trendDataDeployment.stakeRegistry, "StakeRegistry");
     }
 
     function signWithOperatorKey(
@@ -136,9 +134,7 @@ contract HelloWorldTaskManagerSetup is Test {
         return shares;
     }
 
-    function registerAsOperator(
-        Operator memory operator
-    ) internal {
+    function registerAsOperator(Operator memory operator) internal {
         IDelegationManager delegationManager = IDelegationManager(coreDeployment.delegationManager);
 
         IDelegationManager.OperatorDetails memory operatorDetails = IDelegationManager
@@ -152,10 +148,8 @@ contract HelloWorldTaskManagerSetup is Test {
         delegationManager.registerAsOperator(operatorDetails, "");
     }
 
-    function registerOperatorToAVS(
-        Operator memory operator
-    ) internal {
-        ECDSAStakeRegistry stakeRegistry = ECDSAStakeRegistry(helloWorldDeployment.stakeRegistry);
+    function registerOperatorToAVS(Operator memory operator) internal {
+        ECDSAStakeRegistry stakeRegistry = ECDSAStakeRegistry(trendDataDeployment.stakeRegistry);
         AVSDirectory avsDirectory = AVSDirectory(coreDeployment.avsDirectory);
 
         bytes32 salt = keccak256(abi.encodePacked(block.timestamp, operator.key.addr));
@@ -163,7 +157,7 @@ contract HelloWorldTaskManagerSetup is Test {
 
         bytes32 operatorRegistrationDigestHash = avsDirectory
             .calculateOperatorAVSRegistrationDigestHash(
-            operator.key.addr, address(helloWorldDeployment.helloWorldServiceManager), salt, expiry
+            operator.key.addr, address(trendDataDeployment.trendDataServiceManager), salt, expiry
         );
 
         bytes memory signature = signWithOperatorKey(operator, operatorRegistrationDigestHash);
@@ -175,10 +169,8 @@ contract HelloWorldTaskManagerSetup is Test {
         stakeRegistry.registerOperatorWithSignature(operatorSignature, operator.signingKey.addr);
     }
 
-    function deregisterOperatorFromAVS(
-        Operator memory operator
-    ) internal {
-        ECDSAStakeRegistry stakeRegistry = ECDSAStakeRegistry(helloWorldDeployment.stakeRegistry);
+    function deregisterOperatorFromAVS(Operator memory operator) internal {
+        ECDSAStakeRegistry stakeRegistry = ECDSAStakeRegistry(trendDataDeployment.stakeRegistry);
 
         vm.prank(operator.key.addr);
         stakeRegistry.deregisterOperator();
@@ -196,10 +188,8 @@ contract HelloWorldTaskManagerSetup is Test {
         return newOperator;
     }
 
-    function updateOperatorWeights(
-        Operator[] memory _operators
-    ) internal {
-        ECDSAStakeRegistry stakeRegistry = ECDSAStakeRegistry(helloWorldDeployment.stakeRegistry);
+    function updateOperatorWeights(Operator[] memory _operators) internal {
+        ECDSAStakeRegistry stakeRegistry = ECDSAStakeRegistry(trendDataDeployment.stakeRegistry);
 
         address[] memory operatorAddresses = new address[](_operators.length);
         for (uint256 i = 0; i < _operators.length; i++) {
@@ -241,40 +231,45 @@ contract HelloWorldTaskManagerSetup is Test {
         return signatures;
     }
 
-    function createTask(TrafficGenerator memory generator, string memory taskName) internal {
-        IHelloWorldServiceManager helloWorldServiceManager =
-            IHelloWorldServiceManager(helloWorldDeployment.helloWorldServiceManager);
+    function createTask(
+        TrafficGenerator memory generator,
+        ITrendDataServiceManager.TrendData memory trendData
+    ) internal {
+        ITrendDataServiceManager trendDataServiceManager =
+            ITrendDataServiceManager(trendDataDeployment.trendDataServiceManager);
 
         vm.prank(generator.key.addr);
-        helloWorldServiceManager.createNewTask(taskName);
+        trendDataServiceManager.createNewTask(trendData.coin_id, trendData.block_number);
     }
 
     function respondToTask(
         Operator memory operator,
-        IHelloWorldServiceManager.Task memory task,
+        ITrendDataServiceManager.Task memory task,
         uint32 referenceTaskIndex
     ) internal {
         // Create the message hash
-        bytes32 messageHash = keccak256(abi.encodePacked("Hello, ", task.name));
+        bytes32 messageHash = keccak256(abi.encodePacked("TrendData: ", task.id));
 
         bytes memory signature = signWithSigningKey(operator, messageHash);
 
         address[] memory operators = new address[](1);
-        operators[0]=operator.key.addr;
+        operators[0] = operator.key.addr;
         bytes[] memory signatures = new bytes[](1);
-        signatures[0]= signature;
+        signatures[0] = signature;
 
         bytes memory signedTask = abi.encode(operators, signatures, uint32(block.number));
 
-        IHelloWorldServiceManager(helloWorldDeployment.helloWorldServiceManager).respondToTask(
-            task, referenceTaskIndex, signedTask
+        uint256 sample_social_dominance = 20;
+
+        ITrendDataServiceManager(trendDataDeployment.trendDataServiceManager).respondToTask(
+            task, sample_social_dominance, referenceTaskIndex, signedTask
         );
     }
 }
 
-contract HelloWorldServiceManagerInitialization is HelloWorldTaskManagerSetup {
+contract TrendDataServiceManagerInitialization is TrendDataTaskManagerSetup {
     function testInitialization() public view {
-        ECDSAStakeRegistry stakeRegistry = ECDSAStakeRegistry(helloWorldDeployment.stakeRegistry);
+        ECDSAStakeRegistry stakeRegistry = ECDSAStakeRegistry(trendDataDeployment.stakeRegistry);
 
         Quorum memory quorum = stakeRegistry.quorum();
 
@@ -285,9 +280,9 @@ contract HelloWorldServiceManagerInitialization is HelloWorldTaskManagerSetup {
             "First strategy doesn't match mock token strategy"
         );
 
-        assertTrue(helloWorldDeployment.stakeRegistry != address(0), "StakeRegistry not deployed");
+        assertTrue(trendDataDeployment.stakeRegistry != address(0), "StakeRegistry not deployed");
         assertTrue(
-            helloWorldDeployment.helloWorldServiceManager != address(0),
+            trendDataDeployment.trendDataServiceManager != address(0),
             "HelloWorldServiceManager not deployed"
         );
         assertTrue(coreDeployment.delegationManager != address(0), "DelegationManager not deployed");
@@ -299,14 +294,14 @@ contract HelloWorldServiceManagerInitialization is HelloWorldTaskManagerSetup {
     }
 }
 
-contract RegisterOperator is HelloWorldTaskManagerSetup {
+contract RegisterOperator is TrendDataTaskManagerSetup {
     uint256 internal constant INITIAL_BALANCE = 100 ether;
     uint256 internal constant DEPOSIT_AMOUNT = 1 ether;
     uint256 internal constant OPERATOR_COUNT = 4;
 
     IDelegationManager internal delegationManager;
     AVSDirectory internal avsDirectory;
-    IHelloWorldServiceManager internal sm;
+    ITrendDataServiceManager internal sm;
     ECDSAStakeRegistry internal stakeRegistry;
 
     function setUp() public virtual override {
@@ -314,8 +309,8 @@ contract RegisterOperator is HelloWorldTaskManagerSetup {
         /// Setting to internal state for convenience
         delegationManager = IDelegationManager(coreDeployment.delegationManager);
         avsDirectory = AVSDirectory(coreDeployment.avsDirectory);
-        sm = IHelloWorldServiceManager(helloWorldDeployment.helloWorldServiceManager);
-        stakeRegistry = ECDSAStakeRegistry(helloWorldDeployment.stakeRegistry);
+        sm = ITrendDataServiceManager(trendDataDeployment.trendDataServiceManager);
+        stakeRegistry = ECDSAStakeRegistry(trendDataDeployment.stakeRegistry);
 
         addStrategy(address(mockToken));
 
@@ -361,23 +356,27 @@ contract RegisterOperator is HelloWorldTaskManagerSetup {
     }
 }
 
-contract CreateTask is HelloWorldTaskManagerSetup {
-    IHelloWorldServiceManager internal sm;
+contract CreateTask is TrendDataTaskManagerSetup {
+    ITrendDataServiceManager internal sm;
 
     function setUp() public override {
         super.setUp();
-        sm = IHelloWorldServiceManager(helloWorldDeployment.helloWorldServiceManager);
+        sm = ITrendDataServiceManager(trendDataDeployment.trendDataServiceManager);
     }
 
     function testCreateTask() public {
-        string memory taskName = "Test Task";
+        ITrendDataServiceManager.Task memory task = ITrendDataServiceManager.Task({
+            id: 0,
+            request: ITrendDataServiceManager.TrendRequest({coin_id: "bitcoin", block_number: 1})
+        });
 
         vm.prank(generator.key.addr);
-        IHelloWorldServiceManager.Task memory newTask = sm.createNewTask(taskName);
+        ITrendDataServiceManager.Task memory newTask =
+            sm.createNewTask(task.request.coin_id, task.request.block_number);
     }
 }
 
-contract RespondToTask is HelloWorldTaskManagerSetup {
+contract RespondToTask is TrendDataTaskManagerSetup {
     using ECDSAUpgradeable for bytes32;
 
     uint256 internal constant INITIAL_BALANCE = 100 ether;
@@ -386,7 +385,7 @@ contract RespondToTask is HelloWorldTaskManagerSetup {
 
     IDelegationManager internal delegationManager;
     AVSDirectory internal avsDirectory;
-    IHelloWorldServiceManager internal sm;
+    ITrendDataServiceManager internal sm;
     ECDSAStakeRegistry internal stakeRegistry;
 
     function setUp() public override {
@@ -394,8 +393,8 @@ contract RespondToTask is HelloWorldTaskManagerSetup {
 
         delegationManager = IDelegationManager(coreDeployment.delegationManager);
         avsDirectory = AVSDirectory(coreDeployment.avsDirectory);
-        sm = IHelloWorldServiceManager(helloWorldDeployment.helloWorldServiceManager);
-        stakeRegistry = ECDSAStakeRegistry(helloWorldDeployment.stakeRegistry);
+        sm = ITrendDataServiceManager(trendDataDeployment.trendDataServiceManager);
+        stakeRegistry = ECDSAStakeRegistry(trendDataDeployment.stakeRegistry);
 
         addStrategy(address(mockToken));
 
@@ -415,22 +414,30 @@ contract RespondToTask is HelloWorldTaskManagerSetup {
     }
 
     function testRespondToTask() public {
-        string memory taskName = "TestTask";
-        IHelloWorldServiceManager.Task memory newTask = sm.createNewTask(taskName);
+        ITrendDataServiceManager.TrendData memory trendData = ITrendDataServiceManager.TrendData({
+            id: 1,
+            coin_id: "bitcoin",
+            block_number: 1,
+            social_dominance: 20
+        });
+
+        ITrendDataServiceManager.Task memory newTask =
+            sm.createNewTask(trendData.coin_id, trendData.block_number);
         uint32 taskIndex = sm.latestTaskNum() - 1;
 
-        bytes32 messageHash = keccak256(abi.encodePacked("Hello, ", taskName));
+        bytes32 messageHash = keccak256(abi.encodePacked(newTask.id));
         bytes32 ethSignedMessageHash = messageHash.toEthSignedMessageHash();
         bytes memory signature = signWithSigningKey(operators[0], ethSignedMessageHash); // TODO: Use signing key after changes to service manager
 
         address[] memory operatorsMem = new address[](1);
-        operatorsMem[0]=operators[0].key.addr;
+        operatorsMem[0] = operators[0].key.addr;
         bytes[] memory signatures = new bytes[](1);
-        signatures[0]= signature;
+        signatures[0] = signature;
 
         bytes memory signedTask = abi.encode(operatorsMem, signatures, uint32(block.number));
 
-        vm.roll(block.number+1);
-        sm.respondToTask(newTask, taskIndex, signedTask);
+        vm.roll(block.number + 1);
+        uint256 sample_social_dominance = 20;
+        sm.respondToTask(newTask, sample_social_dominance, taskIndex, signedTask);
     }
 }

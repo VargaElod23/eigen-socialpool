@@ -7,17 +7,19 @@ import {ECDSAStakeRegistry} from "@eigenlayer-middleware/src/unaudited/ECDSAStak
 import {IServiceManager} from "@eigenlayer-middleware/src/interfaces/IServiceManager.sol";
 import {ECDSAUpgradeable} from
     "@openzeppelin-upgrades/contracts/utils/cryptography/ECDSAUpgradeable.sol";
-import {IERC1271Upgradeable} from "@openzeppelin-upgrades/contracts/interfaces/IERC1271Upgradeable.sol";
-import {IHelloWorldServiceManager} from "./IHelloWorldServiceManager.sol";
+import {IERC1271Upgradeable} from
+    "@openzeppelin-upgrades/contracts/interfaces/IERC1271Upgradeable.sol";
+import {ITrendDataServiceManager} from "./ITrendDataServiceManager.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "@eigenlayer/contracts/interfaces/IRewardsCoordinator.sol";
-import {TransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
+import {TransparentUpgradeableProxy} from
+    "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 
 /**
  * @title Primary entrypoint for procuring services from HelloWorld.
  * @author Eigen Labs, Inc.
  */
-contract HelloWorldServiceManager is ECDSAServiceManagerBase, IHelloWorldServiceManager {
+contract TrendDataServiceManager is ECDSAServiceManagerBase, ITrendDataServiceManager {
     using ECDSAUpgradeable for bytes32;
 
     uint32 public latestTaskNum;
@@ -30,6 +32,8 @@ contract HelloWorldServiceManager is ECDSAServiceManagerBase, IHelloWorldService
 
     // mapping of task indices to hash of abi.encode(taskResponse, taskResponseMetadata)
     mapping(address => mapping(uint32 => bytes)) public allTaskResponses;
+
+    mapping(string => mapping(uint256 => uint256)) public tokenSocialScores;
 
     modifier onlyOperator() {
         require(
@@ -44,25 +48,20 @@ contract HelloWorldServiceManager is ECDSAServiceManagerBase, IHelloWorldService
         address _stakeRegistry,
         address _rewardsCoordinator,
         address _delegationManager
-
     )
-        ECDSAServiceManagerBase(
-            _avsDirectory,
-            _stakeRegistry,
-            _rewardsCoordinator,
-            _delegationManager
-        )
+        ECDSAServiceManagerBase(_avsDirectory, _stakeRegistry, _rewardsCoordinator, _delegationManager)
     {}
 
     /* FUNCTIONS */
     // NOTE: this function creates new task, assigns it a taskId
     function createNewTask(
-        string memory name
+        string memory coin_id,
+        uint256 block_number
     ) external returns (Task memory) {
         // create a new task struct
         Task memory newTask;
-        newTask.name = name;
-        newTask.taskCreatedBlock = uint32(block.number);
+        newTask.id = latestTaskNum;
+        newTask.request = TrendRequest(coin_id, block_number);
 
         // store hash of task onchain, emit event, and increase taskNum
         allTaskHashes[latestTaskNum] = keccak256(abi.encode(newTask));
@@ -74,6 +73,7 @@ contract HelloWorldServiceManager is ECDSAServiceManagerBase, IHelloWorldService
 
     function respondToTask(
         Task calldata task,
+        uint256 social_dominance,
         uint32 referenceTaskIndex,
         bytes memory signature
     ) external {
@@ -87,17 +87,29 @@ contract HelloWorldServiceManager is ECDSAServiceManagerBase, IHelloWorldService
             "Operator has already responded to the task"
         );
 
+        // TODO: readd this in prod
+        // require(task.request.block_number <= block.number, "Task is in the future");
+
+        require(bytes(task.request.coin_id).length > 0, "Coin ID is empty");
+
         // The message that was signed
-        bytes32 messageHash = keccak256(abi.encodePacked("Hello, ", task.name));
+        bytes32 messageHash = keccak256(abi.encodePacked(task.id));
         bytes32 ethSignedMessageHash = messageHash.toEthSignedMessageHash();
         bytes4 magicValue = IERC1271Upgradeable.isValidSignature.selector;
-        if (!(magicValue == ECDSAStakeRegistry(stakeRegistry).isValidSignature(ethSignedMessageHash,signature))){
+        if (
+            !(
+                magicValue
+                    == ECDSAStakeRegistry(stakeRegistry).isValidSignature(
+                        ethSignedMessageHash, signature
+                    )
+            )
+        ) {
             revert();
         }
 
         // updating the storage with task responses
         allTaskResponses[msg.sender][referenceTaskIndex] = signature;
-
+        tokenSocialScores[task.request.coin_id][task.request.block_number] = social_dominance;
         // emitting event
         emit TaskResponded(referenceTaskIndex, task, msg.sender);
     }
