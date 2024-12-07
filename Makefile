@@ -25,9 +25,9 @@ deploy-eigenlayer-contracts:
 						@chmod +x ./contracts/anvil/deploy-el.sh
 						./contracts/anvil/deploy-el.sh
 
-deploy-helloworld-contracts:
-						@chmod +x ./contracts/anvil/deploy-helloworld.sh
-						./contracts/anvil/deploy-helloworld.sh
+deploy-trend-contracts:
+						@chmod +x ./contracts/anvil/deploy-trend.sh
+						./contracts/anvil/deploy-trend.sh
 
 __CLI__: ##
 
