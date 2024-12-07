@@ -55,8 +55,6 @@ export const readTrendData = (): Promise<CoinTrends> => {
           social_dominance: Math.floor(row.social_dominance * Math.pow(10, 18)),
         };
 
-        console.log("~social_dominance", trendData.social_dominance);
-
         if (!coinTrends[trendData.coin_id]) {
           coinTrends[trendData.coin_id] = [];
         }
@@ -111,7 +109,7 @@ async function startCreatingTasks() {
       console.log("All tasks have been created.");
       clearInterval(intervalId);
     }
-  }, 5000); // 4000 milliseconds = 4 seconds
+  }, 24000); // 24000 milliseconds = 24 seconds
 }
 
 function main() {

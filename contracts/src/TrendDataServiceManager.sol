@@ -86,14 +86,13 @@ contract TrendDataServiceManager is ECDSAServiceManagerBase, ITrendDataServiceMa
             allTaskResponses[msg.sender][referenceTaskIndex].length == 0,
             "Operator has already responded to the task"
         );
-
-        // TODO: readd this in prod
         // require(task.request.block_number <= block.number, "Task is in the future");
 
         require(bytes(task.request.coin_id).length > 0, "Coin ID is empty");
 
         // The message that was signed
-        bytes32 messageHash = keccak256(abi.encodePacked(task.id));
+        bytes32 messageHash =
+            keccak256(abi.encodePacked(task.request.coin_id, task.request.block_number));
         bytes32 ethSignedMessageHash = messageHash.toEthSignedMessageHash();
         bytes4 magicValue = IERC1271Upgradeable.isValidSignature.selector;
         if (
@@ -110,6 +109,7 @@ contract TrendDataServiceManager is ECDSAServiceManagerBase, ITrendDataServiceMa
         // updating the storage with task responses
         allTaskResponses[msg.sender][referenceTaskIndex] = signature;
         tokenSocialScores[task.request.coin_id][task.request.block_number] = social_dominance;
+
         // emitting event
         emit TaskResponded(referenceTaskIndex, task, msg.sender);
     }

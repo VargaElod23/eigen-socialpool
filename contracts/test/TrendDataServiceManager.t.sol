@@ -248,7 +248,8 @@ contract TrendDataTaskManagerSetup is Test {
         uint32 referenceTaskIndex
     ) internal {
         // Create the message hash
-        bytes32 messageHash = keccak256(abi.encodePacked("TrendData: ", task.id));
+        bytes32 messageHash =
+            keccak256(abi.encodePacked(task.request.coin_id, task.request.block_number));
 
         bytes memory signature = signWithSigningKey(operator, messageHash);
 
@@ -425,7 +426,8 @@ contract RespondToTask is TrendDataTaskManagerSetup {
             sm.createNewTask(trendData.coin_id, trendData.block_number);
         uint32 taskIndex = sm.latestTaskNum() - 1;
 
-        bytes32 messageHash = keccak256(abi.encodePacked(newTask.id));
+        bytes32 messageHash =
+            keccak256(abi.encodePacked(newTask.request.coin_id, newTask.request.block_number));
         bytes32 ethSignedMessageHash = messageHash.toEthSignedMessageHash();
         bytes memory signature = signWithSigningKey(operators[0], ethSignedMessageHash); // TODO: Use signing key after changes to service manager
 

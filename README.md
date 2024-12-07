@@ -1,18 +1,30 @@
 # Trend Data AVS
 
-Welcome to the Hello SocialPool Trend Data AVS. This project shows you the simplest functionality you can expect from an AVS. It will give you a concrete understanding of the basic components.
+![socialpool-logo](./assets/socialpool-logo.png)
+
+Welcome to the SocialPool Trend Data AVS. This project shows you the simplest functionality you can implement with TrendMoon & Chappe data and an EigenLayer AVS. It will give you a concrete understanding of the basic components, how to push social data to the AVS, and how to respond to tasks.
 
 ![hello-world-png](./assets/hello-world-diagramv2.png)
 
 ### AVS User Flow
 
 1. AVS consumer requests the trend data as `bytes32 message to be generated and signed.
-2. TrendService contract receives the request and emits a NewTaskCreated event for the request.
+2. The TrendService contract receives the request and emits a NewTaskCreated event for the request.
 3. All Operators who are registered to the AVS and has staked, delegated assets takes this request. Operator generates the requested message, hashes it, and signs the hash with their private key.
 4. Each Operator submits their signed hash back to the TrendService contract.
 5. If the Operator is registered to the AVS and has the minimum needed stake, the submission is accepted.
+6. The TrendService contract verifies the signature and the message is accepted or denied. After this, the trend data is stored in the contract.
 
-That's it. This simple flow highlights some of the core mechanics of how AVSs work.
+### Consuming Trend Data
+
+#### How to read the trend data
+
+The TrendDataServiceManager contract is the main contract that handles the trend data. It is responsible for storing the submitted data from the Operators , and, of course, it is free to read via the
+`mapping(string => mapping(uint256 => uint256)) public tokenSocialScores;` public mapping's generated getters.
+
+#### Requesting Trend Data
+
+If you want to request the trend data for a specific token, you can create a new task by calling the `createNewTask` function.
 
 # Local Devnet Deployment
 

@@ -58,9 +58,6 @@ describe("Operator Functionality", () => {
   let ecdsaRegistryContract: ethers.Contract;
   let avsDirectory: ethers.Contract;
 
-  let requestedTaskId: number = 0;
-  let requestedBlockNumber: number = 13333;
-  const coinId = "pepe";
   beforeAll(async () => {
     anvil = createAnvil();
     await anvil.start();
@@ -151,15 +148,17 @@ describe("Operator Functionality", () => {
   });
 
   it("should create a new task", async () => {
+    const coinId = "pepe";
+    const requestedBlockNumber = 13333;
+
     const task = await trendDataServiceManager.createNewTask(coinId, requestedBlockNumber);
-    requestedTaskId = task.id;
   });
 
   it("should sign and respond to a task", async () => {
     const taskIndex = 0;
     const taskCreatedBlock = await provider.getBlockNumber();
     const taskId = 0;
-    const message = `${taskId}`;
+    const message = `Hello, ${taskId}`;
     const messageHash = ethers.solidityPackedKeccak256(["string"], [message]);
     const messageBytes = ethers.getBytes(messageHash);
     const signature = await signer.signMessage(messageBytes);
@@ -171,13 +170,8 @@ describe("Operator Functionality", () => {
       [operators, signatures, ethers.toBigInt(taskCreatedBlock)]
     );
 
-    console.log("requestedTaskId", requestedTaskId);
-
     const tx = await trendDataServiceManager.respondToTask(
-      {
-        id: requestedTaskId,
-        request: { coin_id: coinId, block_number: requestedBlockNumber },
-      },
+      { id: taskId, request: { coin_id: "pepe", block_number: 13333 } },
       22,
       taskIndex,
       signedTask

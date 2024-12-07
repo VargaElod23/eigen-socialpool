@@ -70,8 +70,8 @@ const signAndRespondToTask = async (
   coinId: string,
   blockNumber: number
 ) => {
-  const message = `${taskId}`;
-  const messageHash = ethers.solidityPackedKeccak256(["string"], [message]);
+  console.log(`Signing task with ID: ${taskId}`);
+  const messageHash = ethers.solidityPackedKeccak256(["string", "uint256"], [coinId, blockNumber]);
   const messageBytes = ethers.getBytes(messageHash);
   const signature = await wallet.signMessage(messageBytes);
 
