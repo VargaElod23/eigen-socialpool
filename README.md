@@ -6,8 +6,6 @@ Special thanks to [TrendMoon](https://trendmoon.ai/) for providing the data and 
 
 Welcome to the SocialPool Trend Data AVS. This project shows you the simplest functionality you can implement with TrendMoon & Chappe data and an EigenLayer AVS. It will give you a concrete understanding of the basic components, how to push social data to the AVS, and how to respond to tasks.
 
-![hello-world-png](./assets/hello-world-diagramv2.png)
-
 ### AVS User Flow
 
 1. AVS consumer requests the trend data as `bytes32 message to be generated and signed.
@@ -16,6 +14,8 @@ Welcome to the SocialPool Trend Data AVS. This project shows you the simplest fu
 4. Each Operator submits their signed hash back to the TrendService contract.
 5. If the Operator is registered to the AVS and has the minimum needed stake, the submission is accepted.
 6. The TrendService contract verifies the signature and the message is accepted or denied. After this, the trend data is stored in the contract.
+
+![hello-world-png](./assets/hello-world-diagramv2.png)
 
 ### Consuming Trend Data
 
