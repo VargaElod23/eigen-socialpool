@@ -2,6 +2,8 @@
 
 ![socialpool-logo](./assets/socialpool-logo.png)
 
+Special thanks to [TrendMoon](https://trendmoon.ai/) for providing the data and support for this project. Later on, we will implement a direct integration with TrendMoon's API.
+
 Welcome to the SocialPool Trend Data AVS. This project shows you the simplest functionality you can implement with TrendMoon & Chappe data and an EigenLayer AVS. It will give you a concrete understanding of the basic components, how to push social data to the AVS, and how to respond to tasks.
 
 ![hello-world-png](./assets/hello-world-diagramv2.png)
